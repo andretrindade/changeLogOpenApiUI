@@ -60,7 +60,7 @@ module.exports = configure(function (/* ctx */) {
 
       // rebuildCache: true, // rebuilds Vite/linter/etc cache on startup
 
-      publicPath: 'https://andretrindade.github.io/changeLogOpenApiUI/',
+      publicPath: process.env.NODE_ENV == "development" ? '' : 'https://andretrindade.github.io/changeLogOpenApiUI/',
       // analyze: true,
       // env: {},
       // rawDefine: {}
@@ -99,7 +99,10 @@ module.exports = configure(function (/* ctx */) {
       // directives: [],
 
       // Quasar plugins
-      plugins: []
+      plugins: [
+        'Loading',
+        'Notify'
+      ]
     },
 
     // animations: 'all', // --- includes all animations
