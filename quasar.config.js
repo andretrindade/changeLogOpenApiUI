@@ -60,7 +60,7 @@ module.exports = configure(function (/* ctx */) {
 
       // rebuildCache: true, // rebuilds Vite/linter/etc cache on startup
 
-      // publicPath: '/',
+      publicPath: 'https://andretrindade.github.io/changeLogOpenApiUI/',
       // analyze: true,
       // env: {},
       // rawDefine: {}
