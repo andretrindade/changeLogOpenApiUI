@@ -1,99 +1,126 @@
 <template>
-<div class="q-pa-md">
+  <div class="q-pa-md">
+    <!-- changeLog Post-->
+
     <div class="q-pa-md col-12">
-      <div class="q-gutter-md sm-12" >
-        <q-input
-          v-model="changeLogPostModel.urlOld"
-          label="Url versão anterior"
-          :rules="[(val) => !!val || 'Campo obrigatório']"
-        />
-        <q-input
-          v-model="changeLogPostModel.urlCurrent"
-          label="Url versão atual"
-          :rules="[(val) => !!val || 'Campo obrigatório']"
-        />
+      <div class="q-gutter-md sm-12">
+        <q-form @submit="gerar(changeLogPostModel)">
+          <q-input
+            v-model="changeLogPostModel.urlOld"
+            label="Url versão anterior"
+            :rules="[(val) => !!val || 'Campo obrigatório']"
+          />
+          <q-input
+            v-model="changeLogPostModel.urlCurrent"
+            label="Url versão atual"
+            :rules="[(val) => !!val || 'Campo obrigatório']"
+          />
 
-        <q-btn
-          class="q-mt-sm"
-          label="Gerar change log"
-          @click="gerar(changeLogPostModel)"
-          color="primary"
-        />
+          <q-btn
+            class="q-mt-sm"
+            label="Gerar change log"
+            type="submit"
+            color="primary"
+          />
+        </q-form>
       </div>
     </div>
-    
-      <div class="q-pa-md" v-if="endpointChangeLogList.length > 0">
-        <q-btn
-          color="dark"
-          icon-right="archive"
-          label="Export to csv"
-          no-caps
-          @click="exportTable"
-        />
-        <q-list bordered class="rounded-borders">
-          <q-expansion-item
-            expand-separator
-            v-for="item in endpointChangeLogList"
-            :label="item.endpoint"
-         
-          >
-            <q-card>
-              <q-card-section>
-                <div class="q-pa-md">
-                  <q-table
-                    title="Changes"
-                    :rows="item.changes"
-                    :columns="columns"
-                    row-key="name"
-                    :visible-columns="visibleColumns"
-                  >
+
+    <!-- changeLog List view-->
+    <div class="q-pa-md" v-if="endpointChangeLogList.length > 0">
+      <q-btn
+        color="dark"
+        icon-right="archive"
+        label="Export to csv"
+        no-caps
+        @click="exportTable"
+      />
+      <q-list bordered class="rounded-borders">
+        <q-expansion-item
+          expand-separator
+          v-for="item in endpointChangeLogList"
+          :label="item.endpoint"
+        >
+          <q-card>
+            <q-card-section>
+              <div class="q-pa-md">
+                <q-table
+                  title="Changes"
+                  :rows="item.changes"
+                  :columns="columns"
+                  row-key="name"
+                  :visible-columns="visibleColumns"
+                >
                   <template v-slot:top="props">
-        <div class="col-2 q-table__title">Changes</div>
+                    <div class="col-2 q-table__title">Changes</div>
 
-        <q-space />
+                    <q-space />
 
-        <div v-if="$q.screen.gt.xs" class="col">
-          <q-toggle v-model="visibleColumns" val="path" label="Path" />
-          <q-toggle v-model="visibleColumns" val="field" label="Field" />
-          <q-toggle v-model="visibleColumns" val="description" label="Description" />
-          <q-toggle v-model="visibleColumns" val="oldValue" label="Old value" />
-          <q-toggle v-model="visibleColumns" val="currentValue" label="Current value" />
-        </div>
-        <q-select
-          v-else
-          v-model="visibleColumns"
-          multiple
-          borderless
-          dense
-          options-dense
-          :display-value="$q.lang.table.columns"
-          emit-value
-          map-options
-          :options="columns"
-          option-value="name"
-          style="min-width: 150px"
-        />
+                    <div v-if="$q.screen.gt.xs" class="col">
+                      <q-toggle
+                        v-model="visibleColumns"
+                        val="path"
+                        label="Path"
+                      />
+                      <q-toggle
+                        v-model="visibleColumns"
+                        val="field"
+                        label="Field"
+                      />
+                      <q-toggle
+                        v-model="visibleColumns"
+                        val="description"
+                        label="Description"
+                      />
+                      <q-toggle
+                        v-model="visibleColumns"
+                        val="oldValue"
+                        label="Old value"
+                      />
+                      <q-toggle
+                        v-model="visibleColumns"
+                        val="currentValue"
+                        label="Current value"
+                      />
+                    </div>
+                    <q-select
+                      v-else
+                      v-model="visibleColumns"
+                      multiple
+                      borderless
+                      dense
+                      options-dense
+                      :display-value="$q.lang.table.columns"
+                      emit-value
+                      map-options
+                      :options="columns"
+                      option-value="name"
+                      style="min-width: 150px"
+                    />
 
-        <q-btn
-          flat round dense
-          :icon="props.inFullscreen ? 'fullscreen_exit' : 'fullscreen'"
-          @click="props.toggleFullscreen"
-          class="q-ml-md"
-        />
-      </template>
-                  </q-table>
-
-
-                </div>
-              </q-card-section>
-            </q-card>
-          </q-expansion-item>
-        </q-list>
-      </div>
+                    <q-btn
+                      flat
+                      round
+                      dense
+                      :icon="
+                        props.inFullscreen ? 'fullscreen_exit' : 'fullscreen'
+                      "
+                      @click="props.toggleFullscreen"
+                      class="q-ml-md"
+                    />
+                  </template>
+                </q-table>
+              </div>
+            </q-card-section>
+          </q-card>
+        </q-expansion-item>
+      </q-list>
     </div>
+  </div>
 </template>
 
 <script lang="ts">
+import { Loading, Notify } from "quasar";
 import {
   ChangeLogPostModel,
   ChangeLogListModel,
@@ -101,7 +128,7 @@ import {
 } from "components/models";
 import ChangeLogListComponent from "components/ChangeLogListComponent.vue";
 import { defineComponent, PropType, computed, ref, toRef, Ref } from "vue";
-import { exportFile, useQuasar } from 'quasar'
+import { exportFile, useQuasar } from "quasar";
 import axios from "axios";
 const columns = [
   { name: "path", label: "Path", field: "path" },
@@ -110,6 +137,7 @@ const columns = [
   { name: "oldValue", label: "Old value", field: "oldValue" },
   { name: "currentValue", label: "Current value", field: "currentValue" },
 ];
+
 function groupByEndPoint(list: ChangeLogListModel[]) {
   const map = new Map();
   list.forEach((item) => {
@@ -124,22 +152,46 @@ function groupByEndPoint(list: ChangeLogListModel[]) {
   return map;
 }
 
-
-
 export default defineComponent({
   name: "ChangeLogPage",
   components: { ChangeLogListComponent },
   data() {
     let endpointChangeLogList: EndpointChangeLogListModel[] = [];
     let changeLogList: ChangeLogListModel[] = [];
+    const changeLogPostModel: ChangeLogPostModel = {
+      urlOld:
+        "https://raw.githubusercontent.com/OpenBanking-Brasil/openapi/main/swagger-apis/accounts/1.0.3.yml",
+      urlCurrent:
+        "https://raw.githubusercontent.com/OpenBanking-Brasil/openapi/main/swagger-apis/accounts/2.0.0.yml",
+    };
 
     return {
+      changeLogPostModel: changeLogPostModel,
       changes: changeLogList,
       endpointChangeLogList: endpointChangeLogList,
     };
   },
   methods: {
+    showLoading() {
+      Loading.show();
+    },
+    hideLoading() {
+      Loading.hide();
+    },
+    validations(changeLog: ChangeLogPostModel) {
+      let strErros: string[] = [];
+      if (!changeLog.urlOld && changeLog.urlOld.length == 0) {
+        strErros.push("Url antiga é de preenchimento obrigatório");
+      }
+
+      if (!changeLog.urlOld && changeLog.urlOld.length == 0) {
+        strErros.push("Url antiga é de preenchimento obrigatório");
+      }
+    },
     gerar(changeLog: ChangeLogPostModel) {
+      this.endpointChangeLogList = [];
+      this.showLoading();
+      this.validations(changeLog);
       axios
         .post(
           "https://change-log-yml.herokuapp.com/change-log/generate-change-log",
@@ -157,34 +209,43 @@ export default defineComponent({
           //  this.endpointChangeLogList = groupByEndPoint(this.changes)
           console.log(response.data.obj.changesLog.length);
         })
-        .catch((error: any) => console.log("Error", error.message));
+        .catch((error: any) => {
+          console.log(error.response);
+
+          Notify.create({
+            type: "negative",
+            message: error.response.data.message,
+          });
+        })
+        .finally((x) => {
+          this.hideLoading();
+        });
     },
 
-    exportTable () {
-        // naive encoding to csv format
-        let contentArray : string[]= []
-        let content = ""
-        contentArray.push(`endpoint;path;field;description;oldValue;currentValue`)
-        this.changes.forEach(element => {
-            contentArray.push(`${element.endpoint};${element.path};${element.field};${element.description};${element.oldValue};${element.currentValue}`)
-        });
-        content = contentArray.join('\r\n')
-        const status = exportFile(
-          'table-export.csv',
-          content,
-          'text/csv'
-        )
-      }
+    exportTable() {
+      // naive encoding to csv format
+      let contentArray: string[] = [];
+      let content = "";
+      contentArray.push(
+        `sep=;`
+      );
+      contentArray.push(
+        `endpoint;path;field;description;oldValue;currentValue`
+      );
+      this.changes.forEach((element) => {
+        contentArray.push(
+          `${element.endpoint};${element.path};${element.field};${element.description};${element.oldValue};${element.currentValue}`
+        );
+      });
+      content = contentArray.join("\r\n");
+      const status = exportFile("table-export.csv", content, "text/csv");
+    },
   },
   setup() {
-    const changeLogPostModel: ChangeLogPostModel = {
-      urlOld:
-        "https://raw.githubusercontent.com/OpenBanking-Brasil/openapi/main/swagger-apis/accounts/1.0.3.yml",
-      urlCurrent:
-        "https://raw.githubusercontent.com/OpenBanking-Brasil/openapi/main/swagger-apis/accounts/2.0.0.yml",
+    return {
+      columns,
+      visibleColumns: ref(["path", "description", "field"]),
     };
-
-    return { changeLogPostModel, columns,  visibleColumns: ref([  'path', 'description', 'field' ]), };
   },
 });
 </script>
