@@ -286,14 +286,9 @@ export default defineComponent({
         `endpoint;path;field;description;oldValue;currentValue`
       );
       this.changes.forEach((change) => {
-        let properties = Object.getOwnPropertyNames(change);
-        let elements = properties
-          .map((property) => {
-            return this.wrapCsvValue(change[property]);
-          })
-          .join(";");
+        
+        contentArray.push(`${ this.wrapCsvValue(change.endpoint)};${this.wrapCsvValue(change.path)};${this.wrapCsvValue(change.field)};${this.wrapCsvValue(change.description)};${this.wrapCsvValue(change.oldValue)};${this.wrapCsvValue(change.currentValue)}`)
 
-        contentArray.push(elements);
       });
       content = contentArray.join("\n");
       const status = exportFile("table-export.csv", content, "text/csv");
