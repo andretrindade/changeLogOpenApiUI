@@ -10,6 +10,14 @@ export interface Meta {
 export interface ChangeLogPostModel{
     urlOld : string;
     urlCurrent : string;
+    templateDescription: ChangeLogPostTemplateDescriptionModel;
+}
+
+export interface ChangeLogPostTemplateDescriptionModel{
+  templateAdded : string;
+  templateEdited : string;
+  templateRemoved : string;
+  templateRequired: string;
 }
 
 export interface EndpointChangeLogListModel{

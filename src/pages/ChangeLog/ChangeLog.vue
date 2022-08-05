@@ -1,33 +1,55 @@
 <template>
-  <div class="q-pa-md">
+  <div class="q-pa-xs">
     <!-- changeLog Post-->
 
     <div class="q-pa-md col-12">
-      <div class="q-gutter-md sm-12">
-        <q-form @submit="gerar(changeLogPostModel)">
-          <q-input
-            v-model="changeLogPostModel.urlOld"
-            label="Url versão anterior"
-            :rules="[(val) => !!val || 'Campo obrigatório']"
-          />
-          <q-input
-            v-model="changeLogPostModel.urlCurrent"
-            label="Url versão atual"
-            :rules="[(val) => !!val || 'Campo obrigatório']"
-          />
+      <q-form @submit="gerar(changeLogPostModel)" class="row">
+        <q-input
+          class="col-12"
+          v-model="changeLogPostModel.urlOld"
+          label="Url versão anterior"
+          :rules="[(val) => !!val || 'Campo obrigatório']"
+        />
+        <q-input
+          class="col-12"
+          v-model="changeLogPostModel.urlCurrent"
+          label="Url versão atual"
+          :rules="[(val) => !!val || 'Campo obrigatório']"
+        />
 
+        <q-input
+          class="col-3 col-md-3 col-sm-6 col-xs-12"
+          v-model="changeLogPostModel.templateDescription.templateAdded"
+          label="Template - Adicionado"
+        />
+        <q-input
+          class="col-3 col-md-3 col-sm-6 col-xs-12"
+          v-model="changeLogPostModel.templateDescription.templateEdited"
+          label="Template - Alterado"
+        />
+        <q-input
+          class="col-3 col-md-3 col-sm-6 col-xs-12"
+          v-model="changeLogPostModel.templateDescription.templateRemoved"
+          label="Template - Removido"
+        />
+        <q-input
+          class="col-3 col-md-3 col-sm-6 col-xs-12"
+          v-model="changeLogPostModel.templateDescription.templateRequired"
+          label="Template - Mandatoriedade"
+        />
+        <div class="col-12 items-center">
           <q-btn
-            class="q-mt-sm"
+            class="q-mt-sm col-md-auto"
             label="Gerar change log"
             type="submit"
             color="primary"
           />
-        </q-form>
-      </div>
+        </div>
+      </q-form>
     </div>
 
     <!-- changeLog List view-->
-    <div class="q-pa-md" v-if="endpointChangeLogList.length > 0">
+    <div class="q-pa-md col-12" v-if="endpointChangeLogList.length > 0">
       <q-btn
         color="dark"
         icon-right="archive"
@@ -35,9 +57,12 @@
         no-caps
         @click="exportTable"
       />
-      <q-list bordered class="rounded-borders">
+      <q-list bordered class="bordered">
         <q-expansion-item
           expand-separator
+          group="somegroup"
+          switch-toggle-side
+          class="shadow-1 overflow-hidden"
           v-for="item in endpointChangeLogList"
           :label="item.endpoint"
         >
@@ -45,15 +70,12 @@
             <q-card-section>
               <div class="q-pa-md">
                 <q-table
-                  title="Changes"
                   :rows="item.changes"
                   :columns="columns"
                   row-key="name"
                   :visible-columns="visibleColumns"
                 >
                   <template v-slot:top="props">
-                    <div class="col-2 q-table__title">Changes</div>
-
                     <q-space />
 
                     <div v-if="$q.screen.gt.xs" class="col">
@@ -131,11 +153,35 @@ import { defineComponent, PropType, computed, ref, toRef, Ref } from "vue";
 import { exportFile, useQuasar } from "quasar";
 import axios from "axios";
 const columns = [
-  { name: "path", label: "Path", field: "path" },
-  { name: "field", label: "Field", field: "field" },
-  { name: "description", label: "Description", field: "description" },
-  { name: "oldValue", label: "Old value", field: "oldValue" },
-  { name: "currentValue", label: "Current value", field: "currentValue" },
+  { name: "path", label: "Path", field: "path", align: "left", sortable: true },
+  {
+    name: "field",
+    label: "Field",
+    field: "field",
+    align: "left",
+    sortable: true,
+  },
+  {
+    name: "description",
+    label: "Description",
+    field: "description",
+    align: "left",
+    sortable: true,
+  },
+  {
+    name: "oldValue",
+    label: "Old value",
+    field: "oldValue",
+    align: "left",
+    sortable: true,
+  },
+  {
+    name: "currentValue",
+    label: "Current value",
+    field: "currentValue",
+    align: "left",
+    sortable: true,
+  },
 ];
 
 function groupByEndPoint(list: ChangeLogListModel[]) {
@@ -163,6 +209,12 @@ export default defineComponent({
         "https://raw.githubusercontent.com/OpenBanking-Brasil/openapi/main/swagger-apis/accounts/1.0.3.yml",
       urlCurrent:
         "https://raw.githubusercontent.com/OpenBanking-Brasil/openapi/main/swagger-apis/accounts/2.0.0.yml",
+      templateDescription: {
+        templateAdded: 'Adicionado - "${field}"',
+        templateEdited: 'Alterado - "${field}"',
+        templateRemoved: 'Removido - "${field}"',
+        templateRequired: "Alterado mandatoriedade",
+      },
     };
 
     return {
@@ -221,23 +273,29 @@ export default defineComponent({
           this.hideLoading();
         });
     },
+    wrapCsvValue(val, formatFn) {
+      val = val.split('"').join('""');
+      return `"${val}"`;
+    },
 
     exportTable() {
       // naive encoding to csv format
       let contentArray: string[] = [];
       let content = "";
       contentArray.push(
-        `sep=;`
-      );
-      contentArray.push(
         `endpoint;path;field;description;oldValue;currentValue`
       );
-      this.changes.forEach((element) => {
-        contentArray.push(
-          `${element.endpoint};${element.path};${element.field};${element.description};${element.oldValue};${element.currentValue}`
-        );
+      this.changes.forEach((change) => {
+        let properties = Object.getOwnPropertyNames(change);
+        let elements = properties
+          .map((property) => {
+            return this.wrapCsvValue(change[property]);
+          })
+          .join(";");
+
+        contentArray.push(elements);
       });
-      content = contentArray.join("\r\n");
+      content = contentArray.join("\n");
       const status = exportFile("table-export.csv", content, "text/csv");
     },
   },
